@@ -1,0 +1,52 @@
+server:
+  port: 8081
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+    show-sql: true
+
+  spring:
+    datasource:
+      url: jdbc:h2:mem:testdb
+      driver-class-name: org.h2.Driver
+      username: sa
+      password:
+    h2:
+      console:
+        enabled: true
+    jpa:
+      hibernate:
+        ddl-auto: create
+      show-sql: true
+
+  application:
+    name: recipick-backend
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+  openai:
+    model: gpt-4o
+    secret-key: { 내 gpt의 api key }
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 342129405711-b6ppr2rhkpqiu7gjrf8ole4vp2thjida.apps.googleusercontent.com
+            client-secret: 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
+            scope:
+              - email
+              - profile
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
