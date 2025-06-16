@@ -14,7 +14,16 @@ public class SecurityConfig {
                 .csrf().disable()
                 .authorizeHttpRequests(auth -> auth
                         .anyRequest().permitAll()
+                )
+                .oauth2Login(oauth -> oauth
+                        .defaultSuccessUrl("http://localhost:5173/callback", true)  // 리디렉션 경로
+                )
+                .logout(logout -> logout
+                        .logoutSuccessUrl("http://localhost:5173")  // 로그아웃 성공 시 프론트로 이동
+                        .invalidateHttpSession(true)
+                        .deleteCookies("JSESSIONID")
                 );
+
         return http.build();
     }
 }
