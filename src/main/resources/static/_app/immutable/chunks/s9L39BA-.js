@@ -1,0 +1,1 @@
+import{w as t}from"./C1hiGri6.js";const s=null,o=t(s);if(typeof window<"u"){const e=localStorage.getItem("loggedInUser");e&&o.set(JSON.parse(e))}o.subscribe(e=>{typeof window<"u"&&(e?localStorage.setItem("loggedInUser",JSON.stringify(e)):localStorage.removeItem("loggedInUser"))});export{o as u};

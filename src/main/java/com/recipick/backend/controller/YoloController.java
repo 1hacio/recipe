@@ -1,18 +1,33 @@
-// 📁 controller/YoloController.java
 package com.recipick.backend.controller;
 
+import com.recipick.backend.dto.RecipeDto;
+import com.recipick.backend.service.RecipeService;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/yolo")
 public class YoloController {
 
-    // YOLO가 보낸 재료명을 받아 출력만 해보기
-    @PostMapping("/result")
-    public void receiveYoloResult(@RequestBody List<String> ingredients) {
-        System.out.println("YOLO 감지 결과: " + ingredients);
-        // TODO: 이걸로 레시피 추천 등에 활용 가능
+    private final RecipeService recipeService;
+
+    @PostMapping("/ingredients")
+    public ResponseEntity<List<RecipeDto>> receiveYoloIngredients(@RequestBody YoloRequest request) {
+        List<String> ingredients = request.getIngredients();
+
+        // 서비스 호출로 레시피 추천 결과 얻기
+        List<RecipeDto> recommended = recipeService.recommendRecipes(ingredients);
+
+        return ResponseEntity.ok(recommended);
+    }
+
+    @Data
+    static class YoloRequest {
+        private List<String> ingredients;
     }
 }
