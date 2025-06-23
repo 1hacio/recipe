@@ -19,7 +19,16 @@ public class Ingredient {
     @Column(nullable = false, unique = true)
     private String name;
 
+    @Column(name = "default_unit")
     private String defaultUnit;
 
-    private Boolean isActive = true;
+    @Column(name = "is_active")
+    private Boolean isActive;
+
+    @PrePersist
+    protected void onCreate() {
+        if (isActive == null) {
+            isActive = true;
+        }
+    }
 }

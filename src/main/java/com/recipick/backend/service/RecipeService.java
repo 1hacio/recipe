@@ -32,7 +32,7 @@ public class RecipeService {
 
         return recipeCountMap.entrySet().stream()
                 .sorted(Map.Entry.<Recipe, Long>comparingByValue().reversed())
-                .map(entry -> new RecipeDto(entry.getKey().getId(), entry.getKey().getName()))
+                .map(entry -> new RecipeDto(entry.getKey().getId(), entry.getKey().getTitle()))
                 .collect(Collectors.toList());
     }
 }

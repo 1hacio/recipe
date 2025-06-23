@@ -2,6 +2,7 @@ package com.recipick.backend.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -12,23 +13,25 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Recipe {
 
     @Id
+    @EqualsAndHashCode.Include
     @Column(name = "rcp_sno")
-    private Long id;  // 레시피 일련번호 (CSV 기준)
+    private Long id;
 
     @Column(name = "rcp_ttl", nullable = false)
-    private String title;  // 레시피 제목
+    private String title;
 
     @Column(name = "ckg_nm")
-    private String alias;  // 짧은 이름, 별칭
+    private String alias;
 
     @Column(name = "rgtr_id")
-    private String registrantId;  // 게시자 ID
+    private String registrantId;
 
     @Column(name = "rgtr_nm")
-    private String registrantName;  // 게시자 이름
+    private String registrantName;
 
     @Column(name = "inq_cnt")
     private Integer viewCount;
@@ -55,7 +58,7 @@ public class Recipe {
     private String description;
 
     @Column(name = "ckg_mtrl_cn", columnDefinition = "TEXT")
-    private String ingredients;  // 재료 + 분량 (CSV 그대로)
+    private String ingredients;
 
     @Column(name = "ckg_inbun_nm")
     private String servings;
@@ -78,7 +81,9 @@ public class Recipe {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
+    @ToString.Exclude
+    @JsonManagedReference
     private List<RecipeIngredient> recipeIngredients;
 
     @PrePersist
