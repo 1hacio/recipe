@@ -9,4 +9,5 @@ public class InventoryRequestDto {
     private String name;
     private int quantity;
     private LocalDate expireDate;
+    private String userEmail;
 }

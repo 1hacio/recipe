@@ -16,4 +16,8 @@ public class Inventory {
     private String name;
     private int quantity;
     private LocalDate expireDate;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
 }
