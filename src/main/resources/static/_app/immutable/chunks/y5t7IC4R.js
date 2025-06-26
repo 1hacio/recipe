@@ -1,1 +1,0 @@
-import{a0 as a,_ as t,a6 as u,A as o}from"./x3-wC0m4.js";function c(e){throw new Error("https://svelte.dev/e/lifecycle_outside_component")}function l(e){t===null&&c(),u&&t.l!==null?i(t).m.push(e):a(()=>{const n=o(e);if(typeof n=="function")return n})}function f(e){t===null&&c(),l(()=>()=>o(e))}function i(e){var n=e.l;return n.u??(n.u={a:[],b:[],m:[]})}export{f as a,l as o};
