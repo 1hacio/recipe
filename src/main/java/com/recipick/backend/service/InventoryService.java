@@ -6,80 +6,127 @@ import com.recipick.backend.model.Inventory;
 import com.recipick.backend.model.User;
 import com.recipick.backend.repository.InventoryRepository;
 import com.recipick.backend.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class InventoryService {
 
     private final InventoryRepository repository;
     private final UserRepository userRepository;
 
-    public InventoryService(InventoryRepository repository, UserRepository userRepository) {
-        this.repository = repository;
-        this.userRepository = userRepository;
-    }
-
     public List<InventoryResponseDto> getInventoryList(String userEmail) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userEmail));
-        
+
         return repository.findByUser(user).stream()
-                .map(i -> new InventoryResponseDto(i.getId(), i.getName(), i.getQuantity(), i.getExpireDate()))
+                .map(i -> new InventoryResponseDto(
+                        i.getId(),
+                        i.getName(),
+                        i.getAmountType(),
+                        i.getCountValue(),
+                        i.getStepLevel(),
+                        i.getExactValue(),
+                        i.getExactUnit(),
+                        i.getPurchaseDate(),
+                        i.getExpireDate(),
+                        i.getMemo()
+                ))
                 .collect(Collectors.toList());
     }
-    
-    public void registerInventory(InventoryRequestDto dto) {
+
+    public InventoryResponseDto addInventory(InventoryRequestDto dto) {
         User user = userRepository.findByEmail(dto.getUserEmail())
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + dto.getUserEmail()));
-        
-        // 중복 체크
-        Optional<Inventory> existingInventory = repository.findByUserAndName(user, dto.getName());
-        
-        if (existingInventory.isPresent()) {
-            // 기존 재고가 있으면 수량 증가
-            Inventory inventory = existingInventory.get();
-            inventory.setQuantity(inventory.getQuantity() + dto.getQuantity());
-            // 만료일이 더 늦은 것으로 업데이트
-            if (dto.getExpireDate() != null && 
-                (inventory.getExpireDate() == null || dto.getExpireDate().isAfter(inventory.getExpireDate()))) {
-                inventory.setExpireDate(dto.getExpireDate());
-            }
-            repository.save(inventory);
-        } else {
-            // 새로운 재고 등록
-            Inventory entity = new Inventory();
-            entity.setName(dto.getName());
-            entity.setQuantity(dto.getQuantity());
-            entity.setExpireDate(dto.getExpireDate());
-            entity.setUser(user);
-            repository.save(entity);
-        }
+
+        Inventory entity = new Inventory();
+        entity.setUser(user);
+        entity.setName(dto.getName());
+        entity.setAmountType(dto.getAmountType());
+        entity.setCountValue(dto.getCountValue());
+        entity.setStepLevel(dto.getStepLevel());
+        entity.setExactValue(dto.getExactValue());
+        entity.setExactUnit(dto.getExactUnit());
+        entity.setPurchaseDate(dto.getPurchaseDate());
+        entity.setExpireDate(dto.getExpireDate());
+        entity.setMemo(dto.getMemo());
+
+        Inventory saved = repository.save(entity);
+
+        return new InventoryResponseDto(
+                saved.getId(),
+                saved.getName(),
+                saved.getAmountType(),
+                saved.getCountValue(),
+                saved.getStepLevel(),
+                saved.getExactValue(),
+                saved.getExactUnit(),
+                saved.getPurchaseDate(),
+                saved.getExpireDate(),
+                saved.getMemo()
+        );
     }
-    
-    // YOLO 결과를 받아서 재고에 등록
+
+    public InventoryResponseDto updateInventory(Long id, InventoryRequestDto dto) {
+        Inventory entity = repository.findById(id)
+                .orElseThrow(() -> new RuntimeException("재고를 찾을 수 없습니다. id=" + id));
+
+        entity.setName(dto.getName());
+        entity.setAmountType(dto.getAmountType());
+        entity.setCountValue(dto.getCountValue());
+        entity.setStepLevel(dto.getStepLevel());
+        entity.setExactValue(dto.getExactValue());
+        entity.setExactUnit(dto.getExactUnit());
+        entity.setPurchaseDate(dto.getPurchaseDate());
+        entity.setExpireDate(dto.getExpireDate());
+        entity.setMemo(dto.getMemo());
+
+        Inventory updated = repository.save(entity);
+
+        return new InventoryResponseDto(
+                updated.getId(),
+                updated.getName(),
+                updated.getAmountType(),
+                updated.getCountValue(),
+                updated.getStepLevel(),
+                updated.getExactValue(),
+                updated.getExactUnit(),
+                updated.getPurchaseDate(),
+                updated.getExpireDate(),
+                updated.getMemo()
+        );
+    }
+
+    public void deleteInventory(Long id) {
+        repository.deleteById(id);
+    }
+
+    // 여기서부터 추가된 YOLO 결과 수신 메서드
     public void registerYoloResults(List<String> ingredients, String userEmail) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + userEmail));
-        
+
         for (String ingredient : ingredients) {
-            // 중복 체크
             Optional<Inventory> existingInventory = repository.findByUserAndName(user, ingredient);
-            
+
             if (existingInventory.isPresent()) {
-                // 기존 재고가 있으면 수량 증가
                 Inventory inventory = existingInventory.get();
-                inventory.setQuantity(inventory.getQuantity() + 1);
+                Integer currentCount = inventory.getCountValue() == null ? 0 : inventory.getCountValue();
+                inventory.setCountValue(currentCount + 1);
+                inventory.setAmountType("count");
                 repository.save(inventory);
             } else {
-                // 새로운 재고 등록 (기본 수량 1, 만료일은 7일 후로 설정)
                 Inventory entity = new Inventory();
                 entity.setName(ingredient);
-                entity.setQuantity(1);
-                entity.setExpireDate(java.time.LocalDate.now().plusDays(7));
+                entity.setAmountType("count");
+                entity.setCountValue(1);
+                entity.setExpireDate(LocalDate.now().plusDays(7));
                 entity.setUser(user);
                 repository.save(entity);
             }

@@ -14,9 +14,15 @@ public class Inventory {
     private Long id;
 
     private String name;
-    private int quantity;
+    private String amountType;      // count, step, exact
+    private Integer countValue;
+    private String stepLevel;
+    private Double exactValue;
+    private String exactUnit;
+    private LocalDate purchaseDate;
     private LocalDate expireDate;
-    
+    private String memo;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
