@@ -2,7 +2,7 @@ package com.recipick.backend.controller;
 
 import com.recipick.backend.model.User;
 import com.recipick.backend.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -12,17 +12,15 @@ import java.util.Map;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/user")
+@RequiredArgsConstructor
 @CrossOrigin(origins = {"http://localhost:5173", "http://localhost:8080"})
-public class OAuthLoginController {
+public class UserController {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    /**
-     * 로그인된 사용자 정보 조회
-     */
-    @GetMapping("/user")
+    // 로그인된 사용자 정보 조회
+    @GetMapping
     public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal OAuth2User principal) {
         if (principal == null) {
             return ResponseEntity.ok(Map.of("authenticated", false));
@@ -52,10 +50,8 @@ public class OAuthLoginController {
         ));
     }
 
-    /**
-     * 로그아웃 처리 (세션 무효화는 Spring Security에 의해 처리됨)
-     */
-    @PostMapping("/auth/logout")
+    // 로그아웃 처리 (세션 무효화는 Spring Security에서 자동 처리)
+    @PostMapping("/logout")
     public ResponseEntity<?> logout() {
         return ResponseEntity.ok(Map.of("success", true, "message", "로그아웃되었습니다."));
     }
