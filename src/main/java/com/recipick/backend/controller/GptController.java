@@ -1,5 +1,6 @@
 package com.recipick.backend.controller;
 
+import com.recipick.backend.dto.AiRecipeDto;
 import com.recipick.backend.service.GptService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -27,13 +28,13 @@ public class GptController {
         return gptService.askGpt(prompt);
     }
 
-    // ✅ 3. 재료 기반 POST 요청 (예: ["양파", "계란"])
+    // ✅ 3. 재료 기반 POST 요청 (프론트엔드와 연동)
     @PostMapping("/recommend-by-ingredients")
-    public String recommendByIngredients(@RequestBody List<String> ingredients) {
+    public AiRecipeDto recommendByIngredients(@RequestBody List<String> ingredients) {
         String prompt = String.format(
                 "다음 재료로 만들 수 있는 요리를 추천해줘. 요리 이름과 간단한 만드는 방법까지 알려줘: %s",
                 String.join(", ", ingredients)
         );
-        return gptService.askGpt(prompt);
+        return gptService.getAiRecipe(prompt);
     }
 }

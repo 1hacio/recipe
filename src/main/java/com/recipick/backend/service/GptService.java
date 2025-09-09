@@ -1,5 +1,8 @@
 package com.recipick.backend.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.recipick.backend.dto.AiRecipeDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,7 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -20,6 +24,8 @@ public class GptService {
 
     @Value("${openai.model:gpt-3.5-turbo}")
     private String model;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public String askGpt(String prompt) {
         try {
@@ -58,11 +64,11 @@ public class GptService {
                     }
                 }
             }
-            
+
             // 응답 구조가 예상과 다를 경우
             log.warn("GPT 응답 구조가 예상과 다릅니다: {}", response.getBody());
             return getFallbackResponse(prompt);
-            
+
         } catch (RestClientException e) {
             log.error("GPT API 호출 중 오류 발생: {}", e.getMessage(), e);
             return getFallbackResponse(prompt);
@@ -71,9 +77,19 @@ public class GptService {
             return getFallbackResponse(prompt);
         }
     }
-    
+
+    public AiRecipeDto getAiRecipe(String prompt) {
+        String jsonResponse = askGpt(prompt);
+
+        try {
+            return objectMapper.readValue(jsonResponse, AiRecipeDto.class);
+        } catch (JsonProcessingException e) {
+            log.error("JSON 파싱 오류: {}", e.getMessage(), e);
+            return null;
+        }
+    }
+
     private String getFallbackResponse(String prompt) {
-        // 기본 fallback 응답
         if (prompt.toLowerCase().contains("레시피") || prompt.toLowerCase().contains("요리")) {
             return "죄송합니다. 현재 AI 서비스에 일시적인 문제가 있습니다. 대신 재료를 입력하시면 관련 레시피를 추천해드리겠습니다.";
         }

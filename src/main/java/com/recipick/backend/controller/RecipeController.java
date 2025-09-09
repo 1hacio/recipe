@@ -22,16 +22,7 @@ public class RecipeController {
         return recipeService.recommendRecipes(ingredients);
     }
 
-    // 2. GPT 추천
-    @PostMapping("/gpt-recommend")
-    public String gptRecommend(@RequestBody List<String> ingredients) {
-        String prompt = String.format(
-                "다음 재료로 만들 수 있는 요리를 하나 추천해줘: %s. 요리 이름과 간단한 설명만 알려줘.",
-                String.join(", ", ingredients));
-        return recipeService.recommendWithGpt(prompt);
-    }
-
-    // 3. 로그인 사용자의 재고 기반 추천
+    // 2. 로그인 사용자의 재고 기반 추천
     @GetMapping("/auto-recommend")
     public List<RecipeDto> autoRecommend(@AuthenticationPrincipal OAuth2User user) {
         if (user == null) {
