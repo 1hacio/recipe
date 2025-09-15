@@ -1,76 +1,88 @@
+// 1hacio/recipe/recipe-0f6ad10d402de36580b03066c9b40cdf289fdae3/src/main/java/com/recipick/backend/service/RecipeService.java
+
 package com.recipick.backend.service;
 
-import com.recipick.backend.dto.RecipeDto;
-import com.recipick.backend.util.RecipeCsvLoader;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import java.util.*;
+import org.springframework.web.client.RestTemplate;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class RecipeService {
 
-    private final List<RecipeDto> allRecipes;
+    private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper; // JSON 파싱을 위해 추가
 
-    public RecipeService() {
-        // 실제 운영 환경에서는 DB에서 데이터를 로드해야 함
-        this.allRecipes = RecipeCsvLoader.loadRecipesFromCsv("recipe.csv");
+    @Value("${api.food-safety-korea.key}")
+    private String foodSafetyApiKey;
+
+    public RecipeService(RestTemplate restTemplate, ObjectMapper objectMapper) {
+        this.restTemplate = restTemplate;
+        this.objectMapper = objectMapper;
     }
 
-    public List<RecipeDto> recommendRecipes(List<String> ingredients) {
-        // 재료 목록을 소문자 & 공백 제거 후 사용
-        Set<String> ingredientSet = new HashSet<>();
-        for (String ingredient : ingredients) {
-            ingredientSet.add(normalize(ingredient));
-        }
+    // 두 API의 추천 결과를 모두 반환하는 메인 메서드
+    public Map<String, Object> getAllRecommendations(List<String> ingredients) {
+        Map<String, Object> recommendations = new HashMap<>();
 
-        List<RecipeDto> scoredRecipes = new ArrayList<>();
-        for (RecipeDto recipe : this.allRecipes) {
-            List<String> have = new ArrayList<>();
-            List<String> missing = new ArrayList<>();
+        // 1. 식약처 API 결과
+        Object foodSafetyResult = getFoodSafetyRecommendations(ingredients);
+        recommendations.put("foodSafety", foodSafetyResult);
 
-            // 레시피 재료를 정규화하여 매칭
-            List<String> recipeIngredients = normalizeIngredients(recipe.getHave());
-            for (String recipeIngredient : recipeIngredients) {
-                if (ingredientSet.contains(recipeIngredient)) {
-                    have.add(recipeIngredient);
-                } else {
-                    missing.add(recipeIngredient);
-                }
-            }
+        // 2. MealDB API 결과
+        Object mealDbResult = getMealDbRecommendations(ingredients);
+        recommendations.put("mealDb", mealDbResult);
 
-            // 보유 재료와 부족 재료를 계산하여 DTO에 설정
-            RecipeDto newRecipe = new RecipeDto();
-            newRecipe.setSeq(recipe.getSeq());
-            newRecipe.setName(recipe.getName());
-            newRecipe.setLink(recipe.getLink());
-            newRecipe.setImage(recipe.getImage());
-            newRecipe.setHave(have);
-            newRecipe.setMissing(missing);
-
-            scoredRecipes.add(newRecipe);
-        }
-
-        // 보유 재료가 많은 순, 부족 재료가 적은 순으로 정렬
-        scoredRecipes.sort(Comparator.comparingInt((RecipeDto r) -> r.getHave().size()).reversed()
-                .thenComparingInt(r -> r.getMissing().size()));
-
-        // 정렬된 레시피에 색상 할당 (프론트엔드와 동일하게)
-        String[] colors = {"#ffb6c1", "#d2b48c", "#add8e6", "#90ee90", "#dda0dd"};
-        for (int i = 0; i < scoredRecipes.size(); i++) {
-            scoredRecipes.get(i).setColor(colors[i % colors.length]);
-        }
-
-        return scoredRecipes;
+        return recommendations;
     }
 
-    private String normalize(String s) {
-        return s.toLowerCase().replaceAll("[^a-z0-9가-힣]", "");
+
+    // 식약처 API 호출
+    private Object getFoodSafetyRecommendations(List<String> ingredients) {
+        if (foodSafetyApiKey == null || foodSafetyApiKey.equals("YOUR_API_KEY") || foodSafetyApiKey.isEmpty()) {
+            return Map.of("error", "식약처 API 키가 설정되지 않았습니다.");
+        }
+
+        String ingredientString = ingredients.stream()
+                .map(ingredient -> URLEncoder.encode(ingredient, StandardCharsets.UTF_8))
+                .collect(Collectors.joining("|"));
+
+        String url = String.format(
+                "http://openapi.foodsafetykorea.go.kr/api/%s/COOKRCP01/json/1/100/RCP_PARTS_DTLS=%s",
+                foodSafetyApiKey, ingredientString
+        );
+
+        try {
+            String jsonResponse = restTemplate.getForObject(url, String.class);
+            return objectMapper.readValue(jsonResponse, Object.class); // JSON 문자열을 객체로 변환
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Map.of("error", "Failed to fetch recipes from Food Safety Korea API");
+        }
     }
 
-    private List<String> normalizeIngredients(List<String> ingredients) {
-        List<String> normalizedList = new ArrayList<>();
-        for (String ingredient : ingredients) {
-            normalizedList.add(normalize(ingredient));
+    // MealDB API 호출 (새로 추가)
+    private Object getMealDbRecommendations(List<String> ingredients) {
+        // MealDB는 주로 재료 1개로 검색하므로, 첫 번째 재료를 사용합니다.
+        if (ingredients == null || ingredients.isEmpty()) {
+            return Map.of("error", "No ingredients provided for MealDB search");
         }
-        return normalizedList;
+        String firstIngredient = URLEncoder.encode(ingredients.get(0), StandardCharsets.UTF_8);
+        String url = "https://www.themealdb.com/api/json/v1/1/filter.php?i=" + firstIngredient;
+
+        try {
+            String jsonResponse = restTemplate.getForObject(url, String.class);
+            return objectMapper.readValue(jsonResponse, Object.class); // JSON 문자열을 객체로 변환
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Map.of("error", "Failed to fetch recipes from TheMealDB API");
+        }
     }
 }

@@ -1,34 +1,30 @@
+// 1hacio/recipe/recipe-0f6ad10d402de36580b03066c9b40cdf289fdae3/src/main/java/com/recipick/backend/controller/RecipeController.java
+
 package com.recipick.backend.controller;
 
-import java.util.List;
-
-import com.recipick.backend.dto.RecipeDto;
 import com.recipick.backend.service.RecipeService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.core.user.OAuth2User;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+import java.util.Map;
 
 @RestController
-@RequestMapping("/api/recipe")
-@RequiredArgsConstructor
+@RequestMapping("/recipes")
 public class RecipeController {
 
     private final RecipeService recipeService;
 
-    // 1. 일반 추천 (입력 재료 기반)
-    @PostMapping("/recommend")
-    public List<RecipeDto> recommend(@RequestBody List<String> ingredients) {
-        return recipeService.recommendRecipes(ingredients);
+    public RecipeController(RecipeService recipeService) {
+        this.recipeService = recipeService;
     }
 
-    // 2. 로그인 사용자의 재고 기반 추천
-    @GetMapping("/auto-recommend")
-    public List<RecipeDto> autoRecommend(@AuthenticationPrincipal OAuth2User user) {
-        if (user == null) {
-            throw new RuntimeException("로그인이 필요합니다.");
-        }
-        String userEmail = user.getAttribute("email");
-        return recipeService.recommendByInventory(userEmail);
+    @GetMapping("/recommendations")
+    public ResponseEntity<Map<String, Object>> getRecommendations(@RequestParam List<String> ingredients) {
+        Map<String, Object> recommendations = recipeService.getAllRecommendations(ingredients);
+        return ResponseEntity.ok(recommendations);
     }
 }
