@@ -11,19 +11,6 @@ public class GeminiRequestDto {
     private List<String> ingredients;
     private String mode; // "current" or "desired"
     private String desiredInput;
-    private Modifiers modifiers;
+    private String modifiers;
 
-    @Data
-    public static class Modifiers {
-        private String meal;
-        private Boolean weather;
-        private String weatherType;
-        private Map<String, Boolean> diet;
-        private String spicy;
-        private String time;
-        private Integer servings;
-        private List<String> cuisine;
-        private Map<String, Boolean> tools;
-        private Boolean strict;
-    }
 }

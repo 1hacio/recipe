@@ -35,8 +35,8 @@ public class InventoryController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    // (추가) 나중에 재료 수정 및 삭제 기능을 위해 아래와 같은 메서드를 추가할 수 있습니다.
-    /*
+
+
     @PutMapping("/{id}")
     public ResponseEntity<Void> updateInventory(@PathVariable Long id, @RequestBody InventoryRequestDto dto) {
         // inventoryService.updateInventory(id, dto);
@@ -48,5 +48,5 @@ public class InventoryController {
         // inventoryService.deleteInventory(id);
         return ResponseEntity.noContent().build();
     }
-    */
+
 }

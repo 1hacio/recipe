@@ -1,99 +1,64 @@
+// 1hacio/recipe/recipe-0f6ad10d402de36580b03066c9b40cdf289fdae3/src/main/java/com/recipick/backend/model/Recipe.java
+
 package com.recipick.backend.model;
 
 import jakarta.persistence.*;
-import lombok.*;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-import java.time.LocalDateTime;
-import java.util.List;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
-@Table(name = "recipe")
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Recipe {
 
     @Id
-    @EqualsAndHashCode.Include
-    @Column(name = "rcp_sno")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "rcp_ttl", nullable = false)
-    private String title;
+    private String recipeName; // 요리 이름
 
-    @Column(name = "ckg_nm")
-    private String alias;
+    @Lob
+    @Column(length = 1000) // 재료 문자열 길이를 고려해 충분한 길이 할당
+    private String ingredients; // 재료 (콤마로 구분된 문자열)
 
-    @Column(name = "rgtr_id")
-    private String registrantId;
+    private String category; // 요리 분류
 
-    @Column(name = "rgtr_nm")
-    private String registrantName;
+    private String calorie;
+    private String protein;
+    private String fat;
+    private String sodium;
 
-    @Column(name = "inq_cnt")
-    private Integer viewCount;
+    private String imageUrl; // 이미지 URL
 
-    @Column(name = "rcmm_cnt")
-    private Integer recommendCount;
-
-    @Column(name = "srap_cnt")
-    private Integer scrapCount;
-
-    @Column(name = "ckg_mth_acto_nm")
-    private String cookingMethod;
-
-    @Column(name = "ckg_sta_acto_nm")
-    private String cookingSituation;
-
-    @Column(name = "ckg_mtrl_acto_nm")
-    private String mainIngredient;
-
-    @Column(name = "ckg_knd_acto_nm")
-    private String dishType;
-
-    @Column(name = "ckg_ipdc", columnDefinition = "TEXT")
-    private String description;
-
-    @Column(name = "ckg_mtrl_cn", columnDefinition = "TEXT")
-    private String ingredients;
-
-    @Column(name = "ckg_inbun_nm")
-    private String servings;
-
-    @Column(name = "ckg_dodf_nm")
-    private String difficulty;
-
-    @Column(name = "ckg_time_nm")
-    private String cookingTime;
-
-    @Column(name = "rcp_img_url", length = 600)
-    private String imageUrl;
-
-    @Column(name = "first_reg_dt")
-    private LocalDateTime firstRegisteredAt;
-
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @OneToMany(mappedBy = "recipe", cascade = CascadeType.ALL, orphanRemoval = true)
-    @ToString.Exclude
-    @JsonManagedReference
-    private List<RecipeIngredient> recipeIngredients;
-
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = this.createdAt;
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
+    // 레시피 조리법 (1~10단계)
+    @Lob
+    @Column(length = 2000)
+    private String step1;
+    @Lob
+    @Column(length = 2000)
+    private String step2;
+    @Lob
+    @Column(length = 2000)
+    private String step3;
+    @Lob
+    @Column(length = 2000)
+    private String step4;
+    @Lob
+    @Column(length = 2000)
+    private String step5;
+    @Lob
+    @Column(length = 2000)
+    private String step6;
+    @Lob
+    @Column(length = 2000)
+    private String step7;
+    @Lob
+    @Column(length = 2000)
+    private String step8;
+    @Lob
+    @Column(length = 2000)
+    private String step9;
+    @Lob
+    @Column(length = 2000)
+    private String step10;
 }

@@ -1,76 +1,28 @@
+// 1hacio/recipe/recipe-0f6ad10d402de36580b03066c9b40cdf289fdae-3/src/main/java/com/recipick/backend/config/SecurityConfig.java
+
 package com.recipick.backend.config;
 
-import com.recipick.backend.service.CustomOAuth2UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
-import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
-import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.Arrays;
 
 @Configuration
+@EnableWebSecurity
 public class SecurityConfig {
-
-    @Autowired
-    private CustomOAuth2UserService customOAuth2UserService;
-
-    @Autowired
-    private ClientRegistrationRepository clientRegistrationRepository;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                // 1. CSRF 보호 비활성화 (API 서버에서는 일반적으로 비활성화)
+                .csrf(csrf -> csrf.disable())
 
-        // ✅ 커스텀 AuthorizationRequestResolver 등록 (prompt=select_account 추가)
-        OAuth2AuthorizationRequestResolver resolver =
-                new CustomAuthorizationRequestResolver(
-                        clientRegistrationRepository,
-                        OAuth2AuthorizationRequestRedirectFilter.DEFAULT_AUTHORIZATION_REQUEST_BASE_URI
+                // 2. 모든 HTTP 요청에 대해 접근을 허용
+                .authorizeHttpRequests(authorize -> authorize
+                        .anyRequest().permitAll() // 어떤 요청이든 인증 없이 접근 허용
                 );
 
-        http
-                .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/index.html", "/favicon.png", "/background.*", "/_app/**").permitAll()
-                        .requestMatchers("/api/auth/**", "/api/user/info").permitAll()
-                        .requestMatchers("/api/**").authenticated()
-                        .anyRequest().permitAll()
-                )
-                .oauth2Login(oauth2 -> oauth2
-                        .userInfoEndpoint(userInfo -> userInfo
-                                .userService(customOAuth2UserService)
-                        )
-                        .defaultSuccessUrl("/?login=success", true)
-                        .failureUrl("/?login=error")
-                )
-                .logout(logout -> logout
-                        .logoutSuccessUrl("/?logout=success")
-                        .invalidateHttpSession(true)
-                        .deleteCookies("JSESSIONID")
-                )
-                .headers(headers -> headers.frameOptions().disable());
-
         return http.build();
-    }
-
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("*"));
-        configuration.setAllowCredentials(true);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-
-        return source;
     }
 }

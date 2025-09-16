@@ -21,6 +21,28 @@ public class InventoryService {
         this.inventoryRepository = inventoryRepository;
     }
 
+    @Transactional
+    public void deleteInventory(Long id) {
+        inventoryRepository.deleteById(id);
+    }
+
+    // 재료 수정 메서드
+    @Transactional
+    public void updateInventory(Long id, InventoryRequestDto dto) {
+        Inventory inventory = inventoryRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("해당 아이템이 없습니다. id=" + id));
+
+        // requestDtoToEntity와 유사한 방식으로 inventory 객체의 내용을 dto의 내용으로 업데이트합니다.
+        // (간략화된 예시)
+        if (dto.getProduct() != null) {
+            inventory.setProductName(dto.getProduct().getName());
+        }
+        if (dto.getMemo() != null) {
+            inventory.setMemo(dto.getMemo());
+        }
+        // ... 나머지 필드 업데이트
+    }
+
     // 모든 재고 목록을 조회하는 메서드
     @Transactional(readOnly = true)
     public List<InventoryResponseDto> getInventoryList() {
@@ -99,5 +121,8 @@ public class InventoryService {
         dto.setImageUrl(inventory.getImageUrl());
 
         return dto;
+    }
+
+    public void registerYoloResults(List<String> ingredients, String userEmail) {
     }
 }
